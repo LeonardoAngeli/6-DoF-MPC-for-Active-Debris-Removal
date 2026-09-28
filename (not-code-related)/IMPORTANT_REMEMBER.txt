@@ -1,0 +1,3 @@
+- CW only consider circular orbits, any e is considered a mismatch data and will be evaluated afterwards through a error map
+
+-
