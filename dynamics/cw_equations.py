@@ -38,18 +38,17 @@ class CWDynamics:
         
         return self.Ad, self.Bd
 
+    def get_continuous_matrices(self):
+        " Return the continuous-time dynamics matrices Ac and Bc "
+        
+        return self.Ac, self.Bc
+
+    
 
 
 
 
-# ==========================================
-# Rapid test area
-# ==========================================
-if __name__ == "__main__":
-    print("Rapid test of CWDynamics\nTesting the continuous-time dynamics matrices and their discretization.\n")
-    CWDynamics_instance = CWDynamics(n=2, dt=0.1)
-    print(CWDynamics_instance.Ac)
-    Ad, Bd = CWDynamics_instance.get_discrete_matrices()
-    print("Discrete-time dynamics matrices:\n", Ad,"\n\n", Bd)
+
+
 
     
