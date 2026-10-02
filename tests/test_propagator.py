@@ -2,15 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from dynamics.cw_analytical import CWDynamicsAnalytical
-from dynamics.cw_equations import CWDynamics
+from dynamics.ss_equations import SchweighartSedwickDynamics
 from dynamics.orbit_propagator import OrbitPropagator
 
 
 "Test the CW dynamics and orbit propagator for the free motion case (no control input) using both the analytical and numerical solutions."
 
-# Define the mean motion and time step
-n = 0.0011
-dt = 1.0
+
 
 # Initialize the continuous-time dynamics and orbit propagator
 x0 = np.array([
@@ -29,9 +27,22 @@ x0 = np.array([
 
 u = np.zeros(3)
 
-dynamics = CWDynamics(n, dt)
+# Define the mean motion and time step
+mu = 3.986004418e14    # m^3/s^2, parametro gravitazionale terrestre (WGS84)
+Re = 6378137.0          # m, raggio equatoriale terrestre
+J2 = 1.08263e-3         # adimensionale
+h = 800e3               # m, quota del target (scegli tu, 800 km è plausibile per un SL-16)
+Rref = Re + h           # m
+i = np.radians(71)      # inclinazione target, in RADIANTI (es. 71° è tipico per molti SL-16)
+
+
+n = np.sqrt(mu / Rref**3)
+dt = 1.0
+
+dynamics = SchweighartSedwickDynamics(n, dt, 0, 6378137, 6378137 + 800e3, np.radians(71))
 propagator = OrbitPropagator(dynamics)
 analytical_dynamics = CWDynamicsAnalytical(n)
+
 
 
 "Numerical propagation using the orbit propagator"
