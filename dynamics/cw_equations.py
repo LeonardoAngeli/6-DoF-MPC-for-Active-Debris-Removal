@@ -2,7 +2,7 @@ import numpy as np
 from scipy.signal import cont2discrete
 
 
-class CWDynamics:
+class SchweighartSedwickDynamics:
     def __init__(self, n, dt):
         " Initialize the continuous-time dynamics matrices "
 
