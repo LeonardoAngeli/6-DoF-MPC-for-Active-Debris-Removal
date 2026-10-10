@@ -83,8 +83,6 @@ trajectory_KF, trajectory_true, measures, P_v = run_simulation(plant, noise, sen
 
 
 
-
-
 "Compare the results"
 
 error = trajectory_true - trajectory_KF
@@ -93,6 +91,7 @@ frac = (np.abs(error) < 3*sigma).mean(axis=0)           # Under 3*sigma
 
 print("Fraction inside 3_sigma:", frac)
 
+assert np.all(frac > 0.97)                              # Fail-safe
 
 "Plot the results for visualization"
 
