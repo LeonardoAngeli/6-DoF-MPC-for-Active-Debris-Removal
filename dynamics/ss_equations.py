@@ -15,7 +15,7 @@ class SchweighartSedwickDynamics:
 
 
         c = np.sqrt(1 + (3*J2*(Re**2) / (8*Rref**2) * (1 + 3 * np.cos(2*i))))
-    
+        k = n*c + (3*n*J2*Re**2)/(2*Rref**2) * (np.cos(i))**2
         
         # Ac is the continuous-time dynamics matrix for the SS equations
         self.Ac = np.array([[0, 0, 0, 1, 0,0], 
@@ -23,7 +23,7 @@ class SchweighartSedwickDynamics:
                             [0, 0, 0, 0, 0, 1], 
                             [(5*(c**2) - 2)*(n**2), 0, 0, 0, 2*n*c, 0], 
                             [0, 0, 0, -2*n*c, 0, 0], 
-                            [0, 0, -(3*c**2 - 2) * n**2, 0, 0, 0]])  
+                            [0, 0, -(k**2), 0, 0, 0]])  
 
         # Bc is the continuous-time input matrix for the SS equations
         self.Bc = np.array([[0, 0, 0], 
