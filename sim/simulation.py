@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def run_simulation(plant, noise, sensor, kf, x0_true, N, u=None):
+def run_simulation(plant, noise, sensor, kf, x0_true, N, u):
    
     # Initialazing 
     x_true = x0_true.copy()
@@ -10,13 +10,8 @@ def run_simulation(plant, noise, sensor, kf, x0_true, N, u=None):
     measures = []
     P_v = [kf.P.copy()]
 
-    # Input
-    if u is None:
-        u = np.zeros(3)
-
-
     # Simulation
-    for _ in range(N):
+    for k in range(N):
         # True value of x + Noise
         x_true = plant.propagate(x_true, u) + noise.sample()
 

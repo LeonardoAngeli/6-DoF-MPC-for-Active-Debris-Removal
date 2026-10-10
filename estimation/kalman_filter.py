@@ -10,7 +10,7 @@ class KalmanFilter:
         self.R = R
         self.x = x0.copy()
         self.P = P0.copy()
-        self.S = 0
+        self.S = None
 
     def predict(self, u):
         # Predicting step k from k-1
