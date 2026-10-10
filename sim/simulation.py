@@ -1,0 +1,64 @@
+import numpy as np
+
+
+def run_simulation(plant, noise, sensor, kf, x0_true, N, u=None):
+   
+    # Initialazing 
+    x_true = x0_true.copy()
+    trajectory_KF = [kf.x.copy()]
+    trajectory_true = [x_true.copy()]
+    measures = []
+    P_v = [kf.P.copy()]
+
+    # Input
+    if u is None:
+        u = np.zeros(3)
+
+
+    # Simulation
+    for _ in range(N):
+        # True value of x + Noise
+        x_true = plant.propagate(x_true, u) + noise.sample()
+
+        # Sensors Data
+        y = sensor.measure(x_true)
+
+        # KF
+        kf.predict(u)
+        kf.update(y)
+
+        # Building arrays
+        trajectory_KF.append(kf.x.copy())
+        trajectory_true.append(x_true.copy())
+        measures.append(y.copy())
+        P_v.append(kf.P.copy())
+
+    measures = np.array(measures)
+    trajectory_KF = np.array(trajectory_KF)
+    trajectory_true = np.array(trajectory_true)
+    P_v = np.array(P_v)
+
+    return trajectory_KF, trajectory_true, measures, P_v
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+            
+
+
+        
+        
+    

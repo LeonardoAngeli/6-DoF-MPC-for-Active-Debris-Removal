@@ -7,6 +7,9 @@ class SensorNoise:
 
         ## Sensor Noise ## 
 
+        # Number of measurements
+        self.n_meas = C.shape[0]
+
         # Noise Covariance due to sensor precision
         Rs = (sigma_p**2) * np.eye(C.shape[0])    # for the filter
         
