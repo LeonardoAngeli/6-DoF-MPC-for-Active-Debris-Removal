@@ -39,7 +39,7 @@ i = np.radians(71)      # inclinazione target, in RADIANTI (es. 71° è tipico p
 n = np.sqrt(mu / Rref**3)
 dt = 1.0
 
-dynamics = SchweighartSedwickDynamics(n, dt, 0, 6378137, 6378137 + 800e3, np.radians(71))
+dynamics = SchweighartSedwickDynamics(n, dt, J2, 6378137, 6378137 + 800e3, np.radians(71))
 propagator = OrbitPropagator(dynamics)
 analytical_dynamics = CWDynamicsAnalytical(n)
 
