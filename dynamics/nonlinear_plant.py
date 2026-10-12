@@ -7,7 +7,7 @@ from transformations.eci_lvlh import matrix_eci_to_LVLH
 from scipy import integrate
 
 class NonLinearPlant:
-    def __init__(self, a, dt, J2, Re, i, e, omega, RAAN, theta, mu, rel_r_C , rel_v_C):
+    def __init__(self, a, dt, J2, Re, i, e, omega, RAAN, theta, mu, x0):
 
         self.a = a
         self.dt = dt
@@ -21,8 +21,8 @@ class NonLinearPlant:
         self.mu = mu
 
         # Relative distance and relative speed of the chaser in the LVLH frame
-        self.rel_r_C = rel_r_C
-        self.rel_v_C = rel_v_C
+        self.rel_r_C = x0[:3]
+        self.rel_v_C = x0[3:]
 
 
         # Find r0 and v0 for perifocal form orbital parameters of the target
@@ -44,8 +44,8 @@ class NonLinearPlant:
         omega_L = self._omega_L(self.r0_T,self.v0_T,Q_L)
 
         # Chaser ECI position and Velocity
-        self.r0_C = self.r0_T + Q_L.T @ rel_r_C
-        self.v0_C = self.v0_T + Q_L.T @ (rel_v_C + np.cross(omega_L, rel_r_C))
+        self.r0_C = self.r0_T + Q_L.T @ self.rel_r_C
+        self.v0_C = self.v0_T + Q_L.T @ (self.rel_v_C + np.cross(omega_L, self.rel_r_C))
 
         # State for ODE
         self.y =np.concatenate((self.r0_T,self.v0_T, self.r0_C, self.v0_C))
