@@ -13,6 +13,9 @@ class ModelNoise:
         # Noise Covariance due to acceleration term
         Qa = (sigma_a**2) * Bd @ Bd.T
 
+        # Noise Covariance from mismatch
+        
+
         # Noise Covariance
         self.Q = Qa
         self.rng = rng

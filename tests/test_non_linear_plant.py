@@ -37,12 +37,12 @@ u = np.zeros(3)
 mu = 3.986004418e14    # m^3/s^2, Gravitational parameter Earth
 Re = 6378137.0          # m, Earth Radius
 J2 = 1.08263e-3         # adimensional
-i = 71                  # inclination
-e = 0.0004              # eccentricity
-omega = 69              # argument of the perigee
-RAAN = 20               # RAAN
-theta = 0               # anomaly
-a = Re + 800e3               # semi-major axis of the orbit
+i = 70.9997                  # inclination
+e = 0.0003119             # eccentricity
+omega = 54.2008             # argument of the perigee
+RAAN = 138.4406               # RAAN
+theta = 305.91               # anomaly
+a = Re + 843.5e3               # semi-major axis of the orbit
 
 n = np.sqrt(mu / a**3)
 dt = 1.0
@@ -74,13 +74,23 @@ x_final_SS = trajectorySS[-1]
 # NL Propagation
 xNL = x0.copy()
 trajectoryNL = [xNL.copy()]
+err_k_v = []
 
 for k in range(N):
+
+    xNL_old = np.concatenate((dynamicsNL.rel_r_C,dynamicsNL.rel_v_C))
     xNL = dynamicsNL.propagateNL(u)
     trajectoryNL.append(xNL.copy())
 
+    err_k = xNL - propagator.propagate(xNL_old,u)
+    err_k_v.append(err_k.copy())
+
 trajectoryNL = np.array(trajectoryNL)
 x_final_NL = trajectoryNL[-1]
+
+E = np.array(err_k_v)
+Q_mis  = E.T @ E / N
+print(Q_mis)
 
 
 "Results"
@@ -109,3 +119,4 @@ plt.show()
 
 
 # %%
+
