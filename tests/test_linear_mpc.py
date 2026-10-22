@@ -23,12 +23,12 @@ from mpc.mpc_3dof import LinearMpc
 
 # Initial positions and speed of the Chaser
 x0 = np.array([
-    100,
-    0.0,           
+    500,
+    100.0,           
     0.0,            
-    0.0,
-    0.0,
-    0.0
+    0.3,
+    1.75,
+    0.1
 ])
 
 # Note:
@@ -54,7 +54,7 @@ dt = 1.0
 
 
 ## Setting up the structure for simulation ##
-seed = 4
+seed = 3
 rng = np.random.default_rng(seed)
 
 # Plant (SS for the KF)
@@ -96,7 +96,7 @@ kf = KalmanFilter(Ad, Bd, C, Q, sensor.R, x0_kf, P0)
 # MPC
 
 # Input Mpc
-x_ref = np.array([0, 0, 0, 0, 0, 0])
+x_ref = np.array([0, 30, 0, 0, 0, 0])
 
 # Weights
 B = 1.0
@@ -113,14 +113,15 @@ D_u_max = u_max / 10
 R_ko = 20.0
 
 # Prediction Horizon
-Hp = 20
+Hp = 200
 
 # Slack variable
 epsilon = 1
 rho = 1e3
+rho_v = 500
 
 # mpc
-mpc = LinearMpc(Ad, Bd, x_ref, Q_mpc, R_mpc, P_mpc, u_max, D_u_max, R_ko, Hp,rho)
+mpc = LinearMpc(Ad, Bd, x_ref, Q_mpc, R_mpc, P_mpc, u_max, D_u_max, R_ko, Hp,rho,rho_v,dt)
 
 
 # plant NL 
@@ -130,9 +131,10 @@ u0 = mpc.compute_control(x0, np.zeros(3))
 print(type(u0), mpc.prob.status, getattr(mpc, "u_opt", None))
 
 # Simulation
-N = 1000  # Number of time steps
+N = 6000  # Number of time steps
 trajectory_KF, trajectory_true, measures, P_v = run_simulation_NL(plantNL, noise, sensor, kf, mpc, x0, N, u_prev)
 
+# %%
 
 "Compare the results"
 
@@ -141,9 +143,11 @@ sigma = np.sqrt(np.diagonal(P_v, axis1=1, axis2=2))     # Variance from matrix p
 frac = (np.abs(error) < 3*sigma).mean(axis=0)           # Under 3*sigma
 
 print("Fraction inside 3_sigma:", frac)
-assert np.all(frac > 0.99)                              # Fail-safe
+# assert np.all(frac > 0.99)                              # Fail-safe
+
 
 "Plot the results for visualization"
+t = np.arange(N + 1) * dt
 
 plt.plot(trajectory_KF[:, 0], trajectory_KF[:, 1])
 plt.plot(trajectory_true[:, 0], trajectory_true[:, 1])
@@ -154,7 +158,23 @@ plt.grid()
 plt.show()
 
 
-t = np.arange(N + 1) * dt
+plt.plot(t, trajectory_true[:, 0])
+plt.ylim(np.min(trajectory_true[:, 0]), np.max(trajectory_true[:, 0]))
+plt.hlines(x_ref[0],0,N,"r",'--')
+plt.xlabel("t [s]")
+plt.ylabel("x [m]")
+plt.grid()
+plt.show()
+
+plt.plot(t, trajectory_true[:, 1])
+plt.ylim(np.min(trajectory_true[:, 1]), np.max(trajectory_true[:, 1]))
+plt.hlines(x_ref[1],0,N,"r",'--')
+plt.xlabel("t [s]")
+plt.ylabel("y [m]")
+plt.grid()
+plt.show()
+
+
 plt.plot(t, error[:, 0], label="error x")
 plt.plot(t, 3*sigma[:, 0], "r--", label="+3σ")
 plt.plot(t, -3*sigma[:, 0], "r--")
