@@ -84,7 +84,7 @@ class LinearMpc:
 
         self.x0.value = x0
         self.u_prev.value = u_prev
-        self.n.value = x0[:3] / np.linalg.norm(x0[:3])
+        self.n.value = self.x_ref[:3] / np.linalg.norm(self.x_ref[:3])
 
         self.prob.solve()
 
