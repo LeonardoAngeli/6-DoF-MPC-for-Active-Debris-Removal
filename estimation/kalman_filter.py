@@ -2,54 +2,56 @@ import numpy as np
 
 
 class KalmanFilter:
+    # Linear Kalman filter for the relative translational state [r, v]
+    # Process model: x_k = Ad x_{k-1} + Bd u_{k-1} + w
+    # Measurement:   y_k = C x_k + v,                   
+    # R is range-dependent and provided by the sensor model at each update.
+
     def __init__(self, Ad, Bd, C, Q, sensor, x0, P0):
         self.Ad = Ad
         self.Bd = Bd
         self.C = C
         self.Q = Q
+        self.sensor = sensor
         self.x = x0.copy()
         self.P = P0.copy()
-        self.S = None
-        self.sensor = sensor
+        self.R = None                   # Measurement covariance
+        self.S = None                   # Innovation covariance
 
     def predict(self, u):
-        # Predicting step k from k-1
+
+        # State estimate a priori
+        x_k = self.Ad @ self.x + self.Bd @ u
 
         # Covariance a priori
         P_k = self.Ad @ self.P @ self.Ad.T + self.Q
 
-        # State Estimate a priori
-        x_k = self.Ad @ self.x + self.Bd @ u
-
-        self.P = P_k
         self.x = x_k
+        self.P = P_k
 
     def update(self, y):
-        # Updating using KF theory
+        # Measurement update with the LIDAR relative-position measurement
 
-        # Updating R
+        # Range-dependent measurement covariance
         self.R = self.sensor.get_matrix_R(self.x)
 
-        # Innovation Covariance
+        # Innovation covariance
         S = self.C @ self.P @ self.C.T + self.R
 
-        # Kalman Gain
+        # Kalman gain: K = P C^T S^-1 
         K = np.linalg.solve(S, self.C @ self.P).T
 
-        # State Estimate a posteriori
+        # State estimate a posteriori
         x_k = self.x + K @ (y - self.C @ self.x)
 
-        # Covariance a posteriori (Joseph form)
-        IKH = np.eye(self.P.shape[0]) - K @ self.C
-        P_new = IKH @ self.P @ IKH.T + K @ self.R @ K.T
-        P_new = 0.5 * (P_new + P_new.T)                               # Forcing symmetry in P
+        # Covariance a posteriori 
+        IKC = np.eye(self.P.shape[0]) - K @ self.C
+        P_k = IKC @ self.P @ IKC.T + K @ self.R @ K.T
+        P_k = 0.5 * (P_k + P_k.T)       # Forcing symmetry
 
-
-        self.P = P_new
         self.x = x_k
+        self.P = P_k
         self.S = S
 
     def get_state(self):
         return self.x, self.P
-
-    

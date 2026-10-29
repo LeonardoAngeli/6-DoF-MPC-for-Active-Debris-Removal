@@ -3,8 +3,14 @@ from scipy.signal import cont2discrete
 
 
 class SchweighartSedwickDynamics:
+    # Linearized relative dynamics with mean J2 effects (Schweighart-Sedwick),
+    # LVLH frame, state x = [x, y, z, vx, vy, vz], input u = thrust acceleration.
+
     def __init__(self, n, dt, J2, Re, Rref, i):
-        " Initialize the continuous-time dynamics matrices "
+        # n: mean motion [rad/s], 
+        # dt: time step [s], 
+        # Rref: reference orbit radius [m],
+        # i: inclination [rad]
 
         self.n = n
         self.dt = dt
@@ -13,50 +19,29 @@ class SchweighartSedwickDynamics:
         self.Rref = Rref
         self.i = i
 
+        # J2 correction coefficients
+        c = np.sqrt(1 + (3 * J2 * Re**2) / (8 * Rref**2) * (1 + 3 * np.cos(2 * i)))
+        k = n * c + (3 * n * J2 * Re**2) / (2 * Rref**2) * np.cos(i)**2
 
-        c = np.sqrt(1 + (3*J2*(Re**2) / (8*Rref**2) * (1 + 3 * np.cos(2*i))))
-        k = n*c + (3*n*J2*Re**2)/(2*Rref**2) * (np.cos(i))**2
-        
-        # Ac is the continuous-time dynamics matrix for the SS equations
-        self.Ac = np.array([[0, 0, 0, 1, 0,0], 
-                            [0, 0, 0, 0, 1, 0], 
-                            [0, 0, 0, 0, 0, 1], 
-                            [(5*(c**2) - 2)*(n**2), 0, 0, 0, 2*n*c, 0], 
-                            [0, 0, 0, -2*n*c, 0, 0], 
-                            [0, 0, -(k**2), 0, 0, 0]])  
+        # Continuous-time state matrix
+        self.Ac = np.array([[0, 0, 0, 1, 0, 0],
+                            [0, 0, 0, 0, 1, 0],
+                            [0, 0, 0, 0, 0, 1],
+                            [(5 * c**2 - 2) * n**2, 0, 0, 0, 2 * n * c, 0],
+                            [0, 0, 0, -2 * n * c, 0, 0],
+                            [0, 0, -k**2, 0, 0, 0]])
 
-        # Bc is the continuous-time input matrix for the SS equations
-        self.Bc = np.array([[0, 0, 0], 
-                            [0, 0, 0], 
-                            [0, 0, 0], 
-                            [1, 0, 0], 
-                            [0, 1, 0], 
-                            [0, 0, 1]])
+        # Continuous-time input matrix
+        self.Bc = np.vstack([np.zeros((3, 3)), np.eye(3)])
 
-
-        # Discretize the continuous-time dynamics matrices using zero-order hold
-        self.Ad, self.Bd, _, _, _ = cont2discrete((self.Ac, self.Bc, np.eye(6), np.zeros((6, 3))), self.dt)
-
-        
-    
-        
+        # Zero-order-hold discretization
+        self.Ad, self.Bd, _, _, _ = cont2discrete(
+            (self.Ac, self.Bc, np.eye(6), np.zeros((6, 3))), self.dt)
 
     def get_discrete_matrices(self):
-        " Return the discrete-time dynamics matrices Ad and Bd "
-        
+        # Discrete-time matrices (Ad, Bd)
         return self.Ad, self.Bd
 
     def get_continuous_matrices(self):
-        " Return the continuous-time dynamics matrices Ac and Bc "
-        
+        # Continuous-time matrices (Ac, Bc)
         return self.Ac, self.Bc
-
-    
-
-
-
-
-
-
-
-    

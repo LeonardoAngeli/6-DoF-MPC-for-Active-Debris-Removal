@@ -2,84 +2,39 @@ import numpy as np
 
 
 class SensorNoise:
-    def __init__(self,C, rng, x0_kf):
+    # LIDAR relative-position sensor, modelled on the Jena-Optronik RVS3000-3D.
+    # Range-dependent noise:
+    #   sigma_p(r) = sigma_p0 + k_r * r
+    #   k_r     = 0.001 / 3   (range dependant noise factor)
+    #   sigma_p0 = 0.1 m      (base noise)
 
+    # The true measurement noise uses the true range; the KF covariance R uses the
+    # estimated range, since the filter does not know the true state.
 
-        ## Sensor Noise ## 
-        # Jena-Optronik RVS3000-3D
-        # Simple model
-
-        # Default
-        self.n_meas = C.shape[0]
+    def __init__(self, C, rng):
         self.C = C
         self.rng = rng
+        self.n_meas = C.shape[0]
 
-        # Sensor variance
-        self.sigma_p0 = 0.1
+        # Noise parameters
+        self.sigma_p0 = 0.1             # m
+        self.k_r = 1.0 / 3e3            # -
 
-        # Distance to target
-        r = np.linalg.norm(x0_kf[:3])
-                
-        # Total variance sensor 
-        sigma_p = self.sigma_p0 + r/3e3
+        self.sigma_p_v = []
 
-        # Noise Covariance due to sensor precision
-        Rs = (sigma_p**2) * np.eye(self.C.shape[0])    # for the filter
-                        
-        # Noise Covariance
-        self.R = Rs
-
-        # Eigenvalues and Eigenvectors
-        mu, D = np.linalg.eigh(self.R)
-        mu = mu * (mu > 0)
-        self.L = D * np.sqrt(mu)
-
-        # Save vector
-        self.sigma_p_v = [sigma_p.copy()]
-
-
-        
-        
-
-    def get_matrix_R(self,x):
-
-        # Distance to target
+    def sigma_p(self, x):
+        # Noise standard deviation at x
         r = np.linalg.norm(x[:3])
-        
-        # Total variance sensor 
-        sigma_p = self.sigma_p0 + r/3e3
-        
+        return self.sigma_p0 + self.k_r * r
 
-        # Noise Covariance due to sensor precision
-        Rs = (sigma_p**2) * np.eye(self.C.shape[0])    # for the filter
-                
-        # Noise Covariance
-        self.R = Rs
+    def get_matrix_R(self, x):
+        # Measurement covariance for the KF, evaluated at the estimated state
+        return self.sigma_p(x)**2 * np.eye(self.n_meas)
 
-        # Eigenvalues and Eigenvectors
-        mu, D = np.linalg.eigh(self.R)
-        mu = mu * (mu > 0)
-        self.L = D * np.sqrt(mu)
-
-        # Save vector
-        self.sigma_p_v.append(sigma_p.copy())
-
-        return self.R
-
-
-        
     def measure(self, x):
+        # Sensor reading y = C x + v
+        sigma = self.sigma_p(x)
+        self.sigma_p_v.append(sigma)
 
-        ## Get the sensor reading y ##
-
-        # Random unit vector with mean = 0, variance = 1
-        r = self.rng.standard_normal(self.R.shape[0])
-        
-        # Noise
-        v = self.L @ r
-
-        # Sensor reading
-        y = self.C @ x + v
-
-        return y
-    
+        v = sigma * self.rng.standard_normal(self.n_meas)
+        return self.C @ x + v
