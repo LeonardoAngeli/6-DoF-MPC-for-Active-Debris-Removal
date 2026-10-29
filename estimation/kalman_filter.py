@@ -2,15 +2,15 @@ import numpy as np
 
 
 class KalmanFilter:
-    def __init__(self, Ad, Bd, C, Q, R, x0, P0):
+    def __init__(self, Ad, Bd, C, Q, sensor, x0, P0):
         self.Ad = Ad
         self.Bd = Bd
         self.C = C
         self.Q = Q
-        self.R = R
         self.x = x0.copy()
         self.P = P0.copy()
         self.S = None
+        self.sensor = sensor
 
     def predict(self, u):
         # Predicting step k from k-1
@@ -26,6 +26,9 @@ class KalmanFilter:
 
     def update(self, y):
         # Updating using KF theory
+
+        # Updating R
+        self.R = self.sensor.get_matrix_R(self.x)
 
         # Innovation Covariance
         S = self.C @ self.P @ self.C.T + self.R

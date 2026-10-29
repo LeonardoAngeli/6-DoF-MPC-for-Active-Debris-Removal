@@ -12,13 +12,12 @@ class ModelNoise:
 
         # Noise Covariance due to acceleration term
         Qa = (sigma_a**2) * Bd @ Bd.T
-
-        # Noise Covariance from mismatch
         
 
         # Noise Covariance
         self.Q = Qa
         self.rng = rng
+        self.sigma_a = sigma_a
 
         # Eigenvalues and Eigenvectors
         mu, D = np.linalg.eigh(self.Q)
@@ -37,3 +36,7 @@ class ModelNoise:
 
         return w
         # Note: rng is defined in the Main to get same seed everywhere and to get same generator
+
+    
+    def sample_accel(self):
+        return self.sigma_a * self.rng.standard_normal(3)
