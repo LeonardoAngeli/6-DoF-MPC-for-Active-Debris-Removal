@@ -73,7 +73,14 @@ noise = ModelNoise(Bd,sigma_a,rng)
 sensor = SensorNoise(sigma_p,C,rng)
 
 # Kalman Filter
-x0_kf = x0.copy()
+x0_kf = np.array([
+    457,
+    123,           
+    5,            
+    0.5,
+    1.5,
+    0.3
+])
 
 
 # Q_mis from mismatch in the model
