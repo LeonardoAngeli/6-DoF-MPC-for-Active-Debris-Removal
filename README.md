@@ -130,8 +130,8 @@ $$
 
 * Worst keep-out margin: **+0.83 m** (never violated)
 * Settled within one orbit: **1000 / 1000**
-* Solver failures: **0 / 1000** → failure probability < 0.3 % (95 % confidence)
-* KF consistency (fraction inside 3σ): mean **0.9975** (ideal 0.9973), worst 0.979
+* Solver failures: **0 / 1000**
+* KF consistency (fraction inside 3σ): mean **0.9975**, worst 0.979
 
 <p align="center">
   <img src="figures/mc_dv_hist.png" width="45%">
@@ -144,20 +144,21 @@ $$
 ## Analyses and lessons learned
 
 <!-- One short paragraph each, in your own words. -->
-* **Multi-rate MPC:** ...
-* **Validity envelope:** ...
+* **Multi-rate MPC:** For the initial approach a multi-rate approach for the 3DoF MPC was used; this compromise guarantees lighter computational calculations and faster runs, while also providing the controller a better look into the future state of the chaser. This solution, although useful during the first approaching phase, will not be viable during the final docking as a more responsive MPC is required.
+* **Validity envelope:** 
 * **Thrust-dependent model error in the KF:** ...
-* **Soft constraints below the exact-penalty threshold:** ...
+* **Soft constraints below the exact-penalty threshold:** During the code-writing and testing phase of the project multiple times slack variables had to be used to correct various problems with the MPC, that mainly lead CVXPY to crash as the convex problem became infeasible for the solver. As it stands for phase 2, slack variables are used to make the problem solvable in case either the maximum velocity v_{\max} is overpassed or if the half-space limit is violated.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 ## Assumptions and limitations
+(phase 2)
 
 * KF process and measurement noise (Q, R) and measurement model C (relative position only) are declared assumptions
-* KF process noise inflated ×9 to cover unmodelled dynamics during manoeuvres
-* Perfect attitude, omnidirectional thrust, non-tumbling target
-* No minimum impulse bit or thrust modulation
+* KF process noise inflated ×9
+* Perfect attitude, omnidirectional thrust 
+* No minimum impulse
 * Linear model valid below ~1 km (see analyses)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -181,7 +182,6 @@ python run_monte_carlo.py    # 1000 runs (~6 h)
 
 - [x] Phase 1 – Relative dynamics (CW, Schweighart-Sedwick) and nonlinear J2 plant
 - [x] Phase 2 – Linear translational MPC with KF and Monte Carlo validation
-- [ ] Phase 2 – Unit tests, sensitivity study, design speed cap
 - [ ] Phase 3 – Attitude dynamics
 - [ ] Phase 4 – Attitude MPC (reaction wheels / RCS)
 - [ ] Phase 5 – Nonlinear coupled 6-DoF MPC
@@ -198,6 +198,6 @@ python run_monte_carlo.py    # 1000 runs (~6 h)
 
 ## Contact
 
-Leonardo Angeli – <!-- email / LinkedIn -->
+Leonardo Angeli – leonardo.angeli2004@gmail.com or langeli@kth.se linkedin: www.linkedin.com/in/leonardo-angeli-2a84b5231
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
