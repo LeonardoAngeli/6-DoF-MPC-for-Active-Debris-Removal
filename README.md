@@ -198,6 +198,9 @@ python run_monte_carlo.py    # 1000 runs (~6 h)
 
 ## Contact
 
-Leonardo Angeli – leonardo.angeli2004@gmail.com or langeli@kth.se linkedin: www.linkedin.com/in/leonardo-angeli-2a84b5231
+- Leonardo Angeli –   
+Email: leonardo.angeli2004@gmail.com or langeli@kth.se   
+Linkedin: www.linkedin.com/in/leonardo-angeli-2a84b5231
+Phone Number: +39 366 4919643
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
