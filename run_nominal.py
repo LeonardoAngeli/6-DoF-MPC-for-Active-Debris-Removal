@@ -109,8 +109,8 @@ P_mpc = scipy.linalg.solve_discrete_are(Ad_mpc, Bd_mpc, Q_mpc, R_mpc)
 P_mpc = 0.5 * (P_mpc + P_mpc.T)
 
 # Constraints
-D_u_max = mult_rate * u_max / 25           # max thrust change per MPC step (same rate as u_max/25 per second)
-R_ko = 20.0                                # m, keep-out half-space distance
+D_u_max = mult_rate * u_max / 25               # max thrust change 
+R_ko = 20.0                                    # m, keep-out half-space distance
 n_ko = x_ref[:3] / np.linalg.norm(x_ref[:3])   # keep-out normal, same as in LinearMpc
 
 # Horizon: Hp * dt_mpc seconds
@@ -118,7 +118,7 @@ Hp = 20
 
 # Soft-constraint penalties
 rho = 1e3                                  # keep-out
-rho_v = 500                                # speed limit
+rho_v = 2e5                                # speed limit
 
 mpc = LinearMpc(Ad_mpc, Bd_mpc, x_ref, Q_mpc, R_mpc, P_mpc, u_max, D_u_max, R_ko, Hp, rho, rho_v, dt_mpc)
 
