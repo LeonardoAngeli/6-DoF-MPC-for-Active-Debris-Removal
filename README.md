@@ -68,3 +68,138 @@
 
 
 ## Architecture
+
+```
+Nonlinear plant (two-body + J2, ECI) ──► LIDAR (relative position) ──► Kalman filter
+          ▲                                                                │
+          └──────────── thrust (ZOH, 30 s) ◄──── Linear MPC (every 30 s) ◄─┘
+```
+
+| Block | Model | Rate |
+|---|---|---|
+| Plant | two-body + J2 for both spacecraft, DOP853 | 1 s |
+| Sensor | LIDAR relative position, σ(r) = 0.1 m + r / 3000 ([RVS3000-3D](https://jena-optronik.de/products/rendezvous-sensors/rvs-3000.html)) | 1 s |
+| Filter | linear KF, Schweighart-Sedwick model | 1 s |
+| Controller | linear MPC, Schweighart-Sedwick model, H<sub>p</sub> = 20 (600 s) | 30 s |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## MPC formulation
+
+$$
+\begin{aligned}
+\min_{u,\,\varepsilon}\quad & \lVert x_{H_p}-x_{\mathrm{ref}}\rVert_P^2+\sum_{k=0}^{H_p-1}\Big(\lVert x_k-x_{\mathrm{ref}}\rVert_Q^2+\lVert u_k\rVert_R^2+\rho\,\varepsilon_k+\rho_v\,\varepsilon_{v,k}\Big)\\
+\text{s.t.}\quad & x_{k+1}=A_d x_k+B_d u_k,\qquad x_0=\hat{x}\\
+& R_{ko}+\delta-n^\top r_{k+1}\le\varepsilon_k\\
+& \lVert v_{k+1}\rVert_2\le v_{\max}+\varepsilon_{v,k}\\
+& \lVert u_k\rVert_2\le u_{\max},\qquad \lVert u_k-u_{k-1}\rVert_2\le\Delta u_{\max}\\
+& \varepsilon_k\ge 0,\qquad \varepsilon_{v,k}\ge 0
+\end{aligned}
+$$
+
+**Design choices**
+
+<!-- For each one, 1–2 sentences in your own words: what and why. -->
+* **Weights:** Bryson's rule (Q<sub>ii</sub> = 1/tol², R = I/u<sub>max</sub>²); terminal cost P from the DARE.
+* **Soft constraints:** exact L1 penalty, ρ above the constraint multiplier.
+* **Keep-out half-space:** fixed normal along the line of sight to the reference.
+* **Speed limit tied to the horizon:** v<sub>max</sub> = 0.8 u<sub>max</sub> H<sub>p</sub> Δt.
+* **Multi-rate:** MPC at 30 s with its own ZOH model.
+* **Constraint tightening:** δ = 1 m for estimation error and inter-sample motion.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## Results
+
+### Nominal run
+
+<!-- Key numbers from run_nominal.py: Δv, settling time, min margin, solve time. -->
+
+<p align="center">
+  <img src="figures/trajectory_xy.png" width="45%">
+  <img src="figures/thrust.png" width="45%">
+</p>
+
+### Monte Carlo (1000 runs)
+
+| Metric | Mean | p95 | Max |
+|---|---|---|---|
+| Δv [m/s] | 3.10 | 3.53 | 3.82 |
+| Settling time [s] | 1698 | 1887 | 1990 |
+| Max speed [m/s] | 0.96 | — | 0.96 (limit 0.96) |
+
+* Worst keep-out margin: **+0.83 m** (never violated)
+* Settled within one orbit: **1000 / 1000**
+* Solver failures: **0 / 1000** → failure probability < 0.3 % (95 % confidence)
+* KF consistency (fraction inside 3σ): mean **0.9975** (ideal 0.9973), worst 0.979
+
+<p align="center">
+  <img src="figures/mc_dv_hist.png" width="45%">
+  <img src="figures/mc_trajectories.png" width="45%">
+</p>
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## Analyses and lessons learned
+
+<!-- One short paragraph each, in your own words. -->
+* **Multi-rate MPC:** ...
+* **Validity envelope:** ...
+* **Thrust-dependent model error in the KF:** ...
+* **Soft constraints below the exact-penalty threshold:** ...
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## Assumptions and limitations
+
+* KF process and measurement noise (Q, R) and measurement model C (relative position only) are declared assumptions
+* KF process noise inflated ×9 to cover unmodelled dynamics during manoeuvres
+* Perfect attitude, omnidirectional thrust, non-tumbling target
+* No minimum impulse bit or thrust modulation
+* Linear model valid below ~1 km (see analyses)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## Getting started
+
+```sh
+git clone <repository-url>
+cd <repository-folder>
+pip install -r requirements.txt
+
+python run_nominal.py        # single run, metrics and figures
+python run_monte_carlo.py    # 1000 runs (~6 h)
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## Roadmap
+
+- [x] Phase 1 – Relative dynamics (CW, Schweighart-Sedwick) and nonlinear J2 plant
+- [x] Phase 2 – Linear translational MPC with KF and Monte Carlo validation
+- [ ] Phase 2 – Unit tests, sensitivity study, design speed cap
+- [ ] Phase 3 – Attitude dynamics
+- [ ] Phase 4 – Attitude MPC (reaction wheels / RCS)
+- [ ] Phase 5 – Nonlinear coupled 6-DoF MPC
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## Note on AI assistance
+
+<!-- Your own words: what you designed and wrote, what you used Claude for. -->
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## Contact
+
+Leonardo Angeli – <!-- email / LinkedIn -->
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
