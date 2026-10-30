@@ -32,7 +32,7 @@ class CWDynamicsAnalytical:
 
     
         # Recover the state at time t using the analytical solution
-        # Note: r_t and v_t are relative position and velocity vectors at time t, respectively.
+        
 
         r_t = Phi_rr @ r0 + Phi_rv @ v0
         v_t = Phi_vr @ r0 + Phi_vv @ v0

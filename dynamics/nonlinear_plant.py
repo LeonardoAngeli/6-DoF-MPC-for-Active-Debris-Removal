@@ -97,7 +97,7 @@ class NonLinearPlant:
         # Acceleration: Gravity + J2 Target
         a_T = (- self.mu * r_T / (np.linalg.norm(r_T)**3)) + self._a_J2(r_T)
 
-        # For a_u the Q_L needs to be re-written at every step as LVLH changes
+        # For a_u the Q_L re-written at every step as LVLH changes
         # a_u
         Q_L = matrix_eci_to_LVLH(r_T,v_T)           
         a_u = Q_L.T @ u
@@ -112,7 +112,7 @@ class NonLinearPlant:
 
 
     def propagateNL(self, u):
-        # For increased precision DOP853 was chosen
+        # For increased precision DOP853
         
         sol = integrate.solve_ivp(
             self.fun,
