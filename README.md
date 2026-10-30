@@ -10,13 +10,10 @@
   </p>
 
   <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white" alt="NumPy">
-  <img src="https://img.shields.io/badge/SciPy-8CAAE6?style=for-the-badge&logo=scipy&logoColor=white" alt="SciPy">
-  <img src="https://img.shields.io/badge/CVXPY-Clarabel-4B8BBE?style=for-the-badge" alt="CVXPY">
   <img src="https://img.shields.io/badge/status-Phase%202%20of%205-orange?style=for-the-badge" alt="Status">
 
   <br /><br />
-  <img src="figures/mc_trajectories.png" alt="Monte Carlo trajectories" width="600">
+  <img src="figures/cover.png" alt="Chaser approaching an SL-16 upper stage (illustrative)" width="100%">
 
 </div>
 
@@ -40,14 +37,14 @@
 
 ## About the project
 
-<!-- 3–5 sentences: the ADR problem, why an SL-16, what this repository does
-     (linear MPC + KF on a nonlinear J2 plant), and where it is in the 5-phase plan. -->
+The project idea was born after a project done in the KTH course SD2900 Fundamentals of Spaceflight, in which the main objective was to design start-to-end a mission of active debris removal using a low thrust electric engine as main propulsion. While for a simple course project the mission analysis is feasible, the specific technologies required to handle the final approach and clamping of the target were too complex and not intended to be developed.    
+This project is trying to further explore the viability of such missions, which have been becoming more relevant entering the era of "new space" and big satellites constellations.   
+The objective is to develop an MCP to handle the final approach to a uncooperative target, starting from some predefined starting conditions till the final clamping of the target at the throat of the nozzle. The chosen target for the mission is one of the multiple SL-16 upper stages orbiting in LEO, due in particular to the critical danger it is posing to future missions in case of a collision with any other target (multiple sources).    
+The repository provides the information necessary to run the scripts and follows a 5-phase plan defined in the "<a href="#roadmap">Roadmap</a>" section.
 
-**Highlights**
 
-* 1000-run Monte Carlo: **0 failures**, keep-out never violated, all runs settled
-* Multi-rate architecture: MPC at 30 s, plant and filter at 1 s (30× smaller QP, same Δv)
-* Measured validity envelope of the linear model (thrust authority and linearization bias)
+
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -58,17 +55,18 @@
 |---|---|
 | Target | SL-16 upper stage, LEO, 843.5 km, i ≈ 71° |
 | Chaser | 500 kg, 1 N-class monopropellant RCS → u<sub>max</sub> = 2·10⁻³ m/s² |
-| Initial condition | co-elliptic drift, 100–300 m below and 800–1200 m behind the target |
-| Final condition | hold point on V-bar, 30 m behind the target |
-| Out of scope | phasing (electric propulsion), attitude control, final capture |
+| Initial condition | 100–300 m below, 800–1200 m behind the target and y-relative speed offset |
+| Final condition | hold point on V-bar, 30 m behind the target (in phase 2) |
+| Out of scope | phasing (electric propulsion) |
 
-<!-- 1–2 sentences on why a co-elliptic approach from behind. -->
+The starting conditions were chosen considering a long phasing at LEO from a lower orbit.   
+Other initial conditions could be chosen for the same problem.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 ## Architecture
-
+(Phase 2)
 ```
 Nonlinear plant (two-body + J2, ECI) ──► LIDAR (relative position) ──► Kalman filter
           ▲                                                                │
@@ -77,8 +75,8 @@ Nonlinear plant (two-body + J2, ECI) ──► LIDAR (relative position) ──�
 
 | Block | Model | Rate |
 |---|---|---|
-| Plant | two-body + J2 for both spacecraft, DOP853 | 1 s |
-| Sensor | LIDAR relative position, σ(r) = 0.1 m + r / 3000 ([RVS3000-3D](https://jena-optronik.de/products/rendezvous-sensors/rvs-3000.html)) | 1 s |
+| Plant | two-body + J2 for both spacecraft | 1 s |
+| Sensor | LIDAR relative position, σ(r) = 0.1 m + r / 3000 | 1 s |
 | Filter | linear KF, Schweighart-Sedwick model | 1 s |
 | Controller | linear MPC, Schweighart-Sedwick model, H<sub>p</sub> = 20 (600 s) | 30 s |
 
@@ -86,12 +84,13 @@ Nonlinear plant (two-body + J2, ECI) ──► LIDAR (relative position) ──�
 
 
 ## MPC formulation
+(Phase 2)
 
 $$
 \begin{aligned}
 \min_{u,\,\varepsilon}\quad & \lVert x_{H_p}-x_{\mathrm{ref}}\rVert_P^2+\sum_{k=0}^{H_p-1}\Big(\lVert x_k-x_{\mathrm{ref}}\rVert_Q^2+\lVert u_k\rVert_R^2+\rho\,\varepsilon_k+\rho_v\,\varepsilon_{v,k}\Big)\\
 \text{s.t.}\quad & x_{k+1}=A_d x_k+B_d u_k,\qquad x_0=\hat{x}\\
-& R_{ko}+\delta-n^\top r_{k+1}\le\varepsilon_k\\
+& R_{ko}-n^\top r_{k+1}\le\varepsilon_k\\
 & \lVert v_{k+1}\rVert_2\le v_{\max}+\varepsilon_{v,k}\\
 & \lVert u_k\rVert_2\le u_{\max},\qquad \lVert u_k-u_{k-1}\rVert_2\le\Delta u_{\max}\\
 & \varepsilon_k\ge 0,\qquad \varepsilon_{v,k}\ge 0
@@ -103,10 +102,9 @@ $$
 <!-- For each one, 1–2 sentences in your own words: what and why. -->
 * **Weights:** Bryson's rule (Q<sub>ii</sub> = 1/tol², R = I/u<sub>max</sub>²); terminal cost P from the DARE.
 * **Soft constraints:** exact L1 penalty, ρ above the constraint multiplier.
-* **Keep-out half-space:** fixed normal along the line of sight to the reference.
+* **Keep-out half-space:** fixed normal along the line to the reference.
 * **Speed limit tied to the horizon:** v<sub>max</sub> = 0.8 u<sub>max</sub> H<sub>p</sub> Δt.
-* **Multi-rate:** MPC at 30 s with its own ZOH model.
-* **Constraint tightening:** δ = 1 m for estimation error and inter-sample motion.
+* **Multi-rate:** MPC at 30 s.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
