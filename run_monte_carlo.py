@@ -186,4 +186,6 @@ plt.grid()
 plt.savefig("figures/mc_trajectories.png")
 plt.show()
 
+
+
 # %%
